@@ -24,32 +24,45 @@ class TestDialog(QtWidgets.QDialog):
         self.createLayouts()
 
     def createWidgets(self):
-        self.lineEdit = QtWidgets.QLineEdit()
-        self.checkbox1 = QtWidgets.QCheckBox("Chbox 1")
-        self.checkbox2 = QtWidgets.QCheckBox("Chbox 2")
-        self.okBTN = QtWidgets.QPushButton("OK")
-        self.cancelBTN = QtWidgets.QPushButton("Cancel")
+        self.selBTN = QtWidgets.QPushButton("New Sel")
+        self.selNumLBL = QtWidgets.QLabel('TEST')
+        self.selSLD = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+        self.resultBTN = QtWidgets.QPushButton("New Result")
+        self.retouchBTN = QtWidgets.QPushButton("Retouch")
+        self.clearBTN = QtWidgets.QPushButton("Clear")
+
+        # --------------------------------------------
+
+
 
     def createLayouts(self):
-    
+        
         mainLayout = QtWidgets.QVBoxLayout(self)
+        
+        mainGridLYT = QtWidgets.QGridLayout(self)
+        mainGridLYT.addWidget(self.selBTN, 0,0)
+        mainGridLYT.addWidget(self.selNumLBL, 0,1)
+        mainGridLYT.addWidget(self.selSLD, 0,2)
+        mainGridLYT.addWidget(self.resultBTN, 0,3)
+        mainGridLYT.addWidget(self.retouchBTN, 0,4)
+        mainGridLYT.addWidget(self.clearBTN, 0,5)
 
-        formLayout = QtWidgets.QFormLayout()
-        formLayout.addRow("Name: ", self.lineEdit)
-        formLayout.addRow("Hidden: ", self.checkbox1)
-        formLayout.addRow("Locked: ", self.checkbox2)
+        coordGridLYT = QtWidgets.QGridLayout(self)
+        coordGridLYT.addWidget(QtWidgets.QLabel('X'), 1,1)
+        coordGridLYT.addWidget(QtWidgets.QLabel('Y'), 1,2)
+        coordGridLYT.addWidget(QtWidgets.QLabel('Z'), 1,3)
+        coordGridLYT.addWidget(QtWidgets.QLabel('Multiply'), 1,4)
+        coordGridLYT.addWidget(QtWidgets.QLabel('Range'), 1,5)
+        coordGridLYT.addWidget(QtWidgets.QLabel('Min'), 1,6)
+        coordGridLYT.addWidget(QtWidgets.QLabel('Max'), 1,7)
 
-        buttonsLayout = QtWidgets.QHBoxLayout()
-        buttonsLayout.addStretch()
-        buttonsLayout.addWidget(self.okBTN)
-        buttonsLayout.addWidget(self.cancelBTN)
 
-        mainLayout.addLayout(formLayout)
-        mainLayout.addLayout(buttonsLayout)
+        mainLayout.addLayout(mainGridLYT)
+        mainLayout.addLayout(coordGridLYT)
+
 
     def printHelloName(self):
-        name = self.lineEdit.text()
-        print(f"Hello {name}")
+        pass
 
 if __name__ == "__main__":
     #TODO: Replace the variable window by the one of the program (window is only for testing)
