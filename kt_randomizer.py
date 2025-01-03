@@ -8,6 +8,12 @@ from PySide2 import QtWidgets
 import util.kt_widgets as ktW
 importlib.reload(ktW)
 
+"""
+DISCLAIMER:
+This file needs to be executed importing it on a parent and with the library kt_widgets included.
+This version will be updated so be able to execute it from the main window.
+
+"""
 
 class kt_randomizer(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -25,7 +31,8 @@ class kt_randomizer(QtWidgets.QDialog):
     def createWidgets(self):
         self.selBTN = QtWidgets.QPushButton("New Sel")
         self.selBTN.setFixedWidth(70)
-        self.selSLD = ktW.ktRangeSlider(devValue=1, minValue=0, maxValue=1, showMinMaxField=False, stepSize=0.1, sliderWidth=100)
+        self.selSLD = ktW.ktRangeSlider(devValue=1, minValue=0, maxValue=1, showMinMaxField=False, 
+                                        stepSize=0.1, sliderWidth=100)
         self.resultBTN = QtWidgets.QPushButton("New Result")
         self.retouchBTN = QtWidgets.QPushButton("Retouch")
         self.clearBTN = QtWidgets.QPushButton("Clear")

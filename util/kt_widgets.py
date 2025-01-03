@@ -85,10 +85,9 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.valueField.valueChanged.connect(self.setSliderValue)
     
     def onSliderValueChanged(self):
-        """This function will be called whenever the slider value changes."""
+        """This function will be called whenever the slider value changes, and will 
+            emit a custom signal when the slider value changes"""
         self.valueField.setValue(self.slider.value() / self.scaleFactor)
-        
-        # Emit a custom signal when the slider value changes
         self.valueChangedEvent.emit(self.valueField.value())
         #print(f"Slider value changed: {value}")
 
@@ -113,7 +112,6 @@ class ktRangeSlider(QtWidgets.QWidget):
             self.valueField.setMaximum(self.maxValueScaled)
         else:
             self.maxField.setValue(self.slider.maximum() / self.scaleFactor)
-    
 
     def setSliderValue(self):
         """Update the slider's value when the spinbox value changes."""
