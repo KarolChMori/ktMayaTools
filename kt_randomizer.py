@@ -1,4 +1,5 @@
 import maya.cmds as mc
+import maya.OpenMaya as om
 import maya.OpenMayaUI as omui
 import importlib
 
@@ -8,12 +9,16 @@ from PySide2 import QtWidgets
 import util.kt_widgets as ktW
 importlib.reload(ktW)
 
+
 """
 DISCLAIMER:
 This file needs to be executed importing it on a parent and with the library kt_widgets included.
 This version will be updated so be able to execute it from the main window.
 
 """
+
+
+
 
 class kt_randomizer(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -23,6 +28,11 @@ class kt_randomizer(QtWidgets.QDialog):
         self.setFixedSize(510, 100)
 
         self.setWindowFlags(self.windowFlags() ^ QtCore.Qt.WindowContextHelpButtonHint) #Remove the ? button
+
+        '''
+        VARIABLES
+        '''
+        self.objData = {}
 
         self.createWidgets()
         self.createLayouts()
@@ -92,7 +102,29 @@ class kt_randomizer(QtWidgets.QDialog):
         self.transformSLD.valueChangedEvent.connect(self.generateResult)
 
     def createSelection(self):
-        print("TODO: Create selection")
+        '''
+        Save all transformation values, "translate","rotate","scale"
+        '''
+        self.objData.clear()
+        selectedObjects = mc.ls(selection=True)
+
+        if selectedObjects:
+            for obj in selectedObjects:
+                translate = mc.xform(obj, query=True, worldSpace=True, translation=True)
+                rotate = mc.xform(obj, query=True, worldSpace=True, rotation=True)
+                scale = mc.xform(obj, query=True, worldSpace=True, scale=True)
+
+                self.objData[obj] = {
+                    'translation': translate,
+                    'rotation': rotate,
+                    'scale': scale
+                }
+        else:
+            om.MGlobal.displayError("Please select any object.")
+
+        # Print the dictionary to verify
+        print(self.objData)
+
     
     def generateNewResult(self):
         print("TODO: Generate new result")
@@ -140,8 +172,14 @@ class kt_randomizer(QtWidgets.QDialog):
         - Gather Checkboxes to see which axis use to apply
         - Get value of the slider
         - Apply transformation
+        """
+        transform = self.optionsCMB.currentText()
+        boolValues = [self.xAxisCB.isChecked(), self.yAxisCB.isChecked(), self.zAxisCB.isChecked()]
+        minVal = self.transformSLD.getMinValue()
+        print(minVal)
 
 
+        """
         # GET VALUES
         multiplyValue = mc.floatField(multiplyValueKey, q=True, v=True)
         boolValues = [mc.checkBox(key, q=True, v=True) for key in boolKeys]

@@ -98,9 +98,13 @@ class ktRangeSlider(QtWidgets.QWidget):
         """If the min value is smaller than max then update it, otherwise revert it"""
         if self.minValueScaled < self.maxValueScaled:
             self.slider.setMinimum(self.minValueScaled)
-            self.valueField.setMinimum(self.minValueScaled)
+            self.valueField.setMinimum(self.slider.minimum() / self.scaleFactor)
         else:
             self.minField.setValue(self.slider.minimum() / self.scaleFactor)
+        
+        # Force UI refresh
+        self.slider.update()
+        self.slider.repaint()
 
     def setMaxSlider(self):
         """Update the slider's maximum value based on the input."""
@@ -109,9 +113,13 @@ class ktRangeSlider(QtWidgets.QWidget):
         """If the max value is bigger than min then update it, otherwise revert it"""
         if self.maxValueScaled > self.minValueScaled:
             self.slider.setMaximum(self.maxValueScaled)
-            self.valueField.setMaximum(self.maxValueScaled)
+            self.valueField.setMaximum(self.slider.maximum() / self.scaleFactor)
         else:
             self.maxField.setValue(self.slider.maximum() / self.scaleFactor)
+        
+        # Force UI refresh
+        self.slider.update()
+        self.slider.repaint()
 
     def setSliderValue(self):
         """Update the slider's value when the spinbox value changes."""
@@ -119,3 +127,9 @@ class ktRangeSlider(QtWidgets.QWidget):
     
     def getValue(self):
         return self.slider.value() / self.scaleFactor
+    
+    def getMinValue(self):
+        return self.minField.value()
+    
+    def getMaxValue(self):
+        return self.maxField.value()
