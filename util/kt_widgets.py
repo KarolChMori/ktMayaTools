@@ -2,6 +2,9 @@ from PySide2 import QtCore
 from PySide2 import QtWidgets
 
 class ktRangeSlider(QtWidgets.QWidget):
+    # Define a custom signal to notify when the value changes
+    valueChangedEvent = QtCore.Signal(float)
+
     def __init__(self, textWidth=60, sliderWidth=150, devValue=0, minValue=0, maxValue=10, showValueField=True, showMinMaxField=True, stepSize=1):
         super().__init__()
 
@@ -76,10 +79,18 @@ class ktRangeSlider(QtWidgets.QWidget):
 
     def createConnections(self):
         """When values change update the widgets with the functions innit"""
-        self.slider.valueChanged.connect(self.setValueField)
+        self.slider.valueChanged.connect(self.onSliderValueChanged)
         self.minField.valueChanged.connect(self.setMinSlider)
         self.maxField.valueChanged.connect(self.setMaxSlider)
         self.valueField.valueChanged.connect(self.setSliderValue)
+    
+    def onSliderValueChanged(self):
+        """This function will be called whenever the slider value changes."""
+        self.valueField.setValue(self.slider.value() / self.scaleFactor)
+        
+        # Emit a custom signal when the slider value changes
+        self.valueChangedEvent.emit(self.valueField.value())
+        #print(f"Slider value changed: {value}")
 
     def setMinSlider(self):
         """Update the slider's minimum value based on the input."""
@@ -103,9 +114,6 @@ class ktRangeSlider(QtWidgets.QWidget):
         else:
             self.maxField.setValue(self.slider.maximum() / self.scaleFactor)
     
-    def setValueField(self):
-        """Update the value of the spinbox when the slider moves."""
-        self.valueField.setValue(self.slider.value() / self.scaleFactor)
 
     def setSliderValue(self):
         """Update the slider's value when the spinbox value changes."""
