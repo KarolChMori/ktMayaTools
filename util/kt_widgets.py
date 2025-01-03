@@ -2,60 +2,68 @@ from PySide2 import QtCore
 from PySide2 import QtWidgets
 
 class ktRangeSlider(QtWidgets.QWidget):
-    def __init__(self, textWidth=60, sliderWidth=150, minValue=0, maxValue=10, showValueField=True, showMinMaxField=True, stepSize=1):
+    def __init__(self, textWidth=60, sliderWidth=150, devValue=0, minValue=0, maxValue=10, showValueField=True, showMinMaxField=True, stepSize=1):
         super().__init__()
 
+        """
+        Variables definition
+        """
         self.textWidth = textWidth
         self.sliderWidth = sliderWidth
+        self.devValue = devValue
         self.minValue = minValue
         self.maxValue = maxValue
         self.showValueField = showValueField
         self.showMinMaxField = showMinMaxField
         self.stepSize = stepSize
         
-
+        """
+        UI Creation
+        """
         self.createWidgets()
         self.createLayouts()
         self.createConnections()
 
     def createWidgets(self):
-        # Scaling factor to allow fractional precision
+        # Scaling factor to allow fractional precision (unmodified pre=2)
         self.scaleFactor = 100 
         
         # Scale values to integers
         self.minValueScaled = int(self.minValue * self.scaleFactor)
         self.maxValueScaled = int(self.maxValue * self.scaleFactor)
         self.stepSizeScaled = int(self.stepSize * self.scaleFactor)
+        self.devValueScaled = int(self.devValue * self.scaleFactor)
 
         
         self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.slider.setRange(self.minValueScaled, self.maxValueScaled)
+        self.slider.setValue(self.devValueScaled)
         self.slider.setFixedWidth(self.sliderWidth)
-        self.slider.setMinimum(self.minValueScaled)
-        self.slider.setMaximum(self.maxValueScaled)
         self.slider.setTickInterval(self.stepSizeScaled)
         self.slider.setSingleStep(self.stepSizeScaled)
 
         # Create QDoubleSpinBox for min and max
-        self.minInputTXT = QtWidgets.QDoubleSpinBox()
-        self.minInputTXT.setFixedWidth(self.textWidth)
-        self.minInputTXT.setValue(self.minValue)
-        self.minInputTXT.setSingleStep(self.stepSize)
+        self.minField = QtWidgets.QDoubleSpinBox()
+        self.minField.setFixedWidth(self.textWidth)
+        self.minField.setValue(self.minValue)
+        self.minField.setSingleStep(self.stepSize)
 
-        self.maxInputTXT = QtWidgets.QDoubleSpinBox()
-        self.maxInputTXT.setFixedWidth(self.textWidth)
-        self.maxInputTXT.setValue(self.maxValue)
-        self.maxInputTXT.setSingleStep(self.stepSize)
+        self.maxField = QtWidgets.QDoubleSpinBox()
+        self.maxField.setFixedWidth(self.textWidth)
+        self.maxField.setValue(self.maxValue)
+        self.maxField.setSingleStep(self.stepSize)
 
         # Create QDoubleSpinBox for the slider's value
         self.valueField = QtWidgets.QDoubleSpinBox()
         self.valueField.setRange(self.minValue, self.maxValue)
         self.valueField.setFixedWidth(self.textWidth)
         self.valueField.setSingleStep(self.stepSize)
-        self.valueField.setValue(self.slider.value())
+        self.valueField.setValue(self.slider.value() / self.scaleFactor)
         
 
     def createLayouts(self):
         mainLayout = QtWidgets.QHBoxLayout(self)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
 
         if self.showValueField:
             mainLayout.addWidget(self.valueField)
@@ -63,45 +71,45 @@ class ktRangeSlider(QtWidgets.QWidget):
         mainLayout.addWidget(self.slider)
 
         if self.showMinMaxField:
-            mainLayout.addWidget(self.minInputTXT)
-            mainLayout.addWidget(self.maxInputTXT)
+            mainLayout.addWidget(self.minField)
+            mainLayout.addWidget(self.maxField)
 
     def createConnections(self):
-        # Connect input fields to update slider range
-        self.minInputTXT.valueChanged.connect(self.updateMin)
-        self.maxInputTXT.valueChanged.connect(self.updateMax)
+        """When values change update the widgets with the functions innit"""
+        self.slider.valueChanged.connect(self.setValueField)
+        self.minField.valueChanged.connect(self.setMinSlider)
+        self.maxField.valueChanged.connect(self.setMaxSlider)
+        self.valueField.valueChanged.connect(self.setSliderValue)
 
-        # Connect the slider's value change to update the updateValueField
-        self.slider.valueChanged.connect(self.updateValueField)
-
-        # Connect the valueField to update the slider
-        self.valueField.valueChanged.connect(self.updateSliderValue)
-
-    def updateMin(self):
+    def setMinSlider(self):
         """Update the slider's minimum value based on the input."""
-        minValue = self.minInputTXT.value()
-        # Only update if the minValue is less than the maxValue
-        if minValue < self.maxInputTXT.value():
-            self.slider.setMinimum(minValue)
-        else:
-            self.minInputTXT.setValue(self.slider.minimum())  # Revert to valid value
+        self.minValueScaled = int(self.minField.value() * self.scaleFactor)
 
-    def updateMax(self):
+        """If the min value is smaller than max then update it, otherwise revert it"""
+        if self.minValueScaled < self.maxValueScaled:
+            self.slider.setMinimum(self.minValueScaled)
+            self.valueField.setMinimum(self.minValueScaled)
+        else:
+            self.minField.setValue(self.slider.minimum() / self.scaleFactor)
+
+    def setMaxSlider(self):
         """Update the slider's maximum value based on the input."""
-        maxValue = self.maxInputTXT.value()
-        # Only update if the maxValue is greater than the minValue
-        if maxValue > self.minInputTXT.value():
-            self.slider.setMaximum(maxValue)
-        else:
-            self.maxInputTXT.setValue(self.slider.maximum())  # Revert to valid value
-    
-    def updateValueField(self):
-        """Update the value of the spinbox when the slider moves."""
-        self.valueField.setValue(self.slider.value())
+        self.maxValueScaled = int(self.maxField.value() * self.scaleFactor)
 
-    def updateSliderValue(self):
+        """If the max value is bigger than min then update it, otherwise revert it"""
+        if self.maxValueScaled > self.minValueScaled:
+            self.slider.setMaximum(self.maxValueScaled)
+            self.valueField.setMaximum(self.maxValueScaled)
+        else:
+            self.maxField.setValue(self.slider.maximum() / self.scaleFactor)
+    
+    def setValueField(self):
+        """Update the value of the spinbox when the slider moves."""
+        self.valueField.setValue(self.slider.value() / self.scaleFactor)
+
+    def setSliderValue(self):
         """Update the slider's value when the spinbox value changes."""
-        self.slider.setValue(self.valueField.value() )
+        self.slider.setValue(int(self.valueField.value() * self.scaleFactor))
     
     def getValue(self):
-        return self.slider.value()
+        return self.slider.value() / self.scaleFactor

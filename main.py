@@ -32,5 +32,5 @@ if __name__ == "__main__":
     except:
         pass
 
-    window = kt_randomizer.TestDialog(parent=mayaMainWindow())  
+    window = kt_randomizer.kt_randomizer(parent=mayaMainWindow())  
     window.show()
