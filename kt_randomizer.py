@@ -1,18 +1,16 @@
 import maya.cmds as mc
 import maya.OpenMayaUI as omui
+import importlib
 
 from PySide2 import QtCore
 from PySide2 import QtWidgets
 
-from shiboken2 import wrapInstance
+import util.kt_widgets as ktW
+importlib.reload(ktW)
 
-
-def mayaMainWindow():
-    mainWindowPTR = omui.MQtUtil.mainWindow()
-    return wrapInstance(int(mainWindowPTR), QtWidgets.QWidget)
 
 class TestDialog(QtWidgets.QDialog):
-    def __init__(self, parent=mayaMainWindow()):
+    def __init__(self, parent=None):
         super(TestDialog, self).__init__(parent)
 
         self.setWindowTitle("Test")
@@ -32,7 +30,7 @@ class TestDialog(QtWidgets.QDialog):
         self.clearBTN = QtWidgets.QPushButton("Clear")
 
         # --------------------------------------------
-
+        self.translateSLD = ktW.ktRangeSlider()
 
 
     def createLayouts(self):
@@ -55,23 +53,14 @@ class TestDialog(QtWidgets.QDialog):
         coordGridLYT.addWidget(QtWidgets.QLabel('Range'), 1,5)
         coordGridLYT.addWidget(QtWidgets.QLabel('Min'), 1,6)
         coordGridLYT.addWidget(QtWidgets.QLabel('Max'), 1,7)
-
+        coordGridLYT.addWidget(self.translateSLD, 2,5,1,3)
 
         mainLayout.addLayout(mainGridLYT)
         mainLayout.addLayout(coordGridLYT)
 
+        self.setLayout(mainLayout)
+
+
 
     def printHelloName(self):
         pass
-
-if __name__ == "__main__":
-    #TODO: Replace the variable window by the one of the program (window is only for testing)
-
-    try:
-        window.close() # type: ignore
-        window.deleteLater() # type: ignore
-    except:
-        pass
-
-    window = TestDialog()
-    window.show()
