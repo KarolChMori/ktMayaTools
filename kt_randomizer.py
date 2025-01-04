@@ -2,6 +2,7 @@ import maya.cmds as mc
 import maya.OpenMaya as om
 import maya.OpenMayaUI as omui
 import importlib
+import random
 
 from PySide2 import QtCore
 from PySide2 import QtWidgets
@@ -16,9 +17,6 @@ This file needs to be executed importing it on a parent and with the library kt_
 This version will be updated so be able to execute it from the main window.
 
 """
-
-
-
 
 class kt_randomizer(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -50,10 +48,11 @@ class kt_randomizer(QtWidgets.QDialog):
 
         # --------------------------------------------
         self.optionsCMB = QtWidgets.QComboBox()
-        self.optionsCMB.addItem('Translate')
-        self.optionsCMB.addItem('Rotate')
-        self.optionsCMB.addItem('Scale')
+        self.optionsCMB.addItem('translation')
+        self.optionsCMB.addItem('rotation')
+        self.optionsCMB.addItem('scale')
         self.xAxisCB = QtWidgets.QCheckBox()
+        self.xAxisCB.setChecked(True)
         self.yAxisCB = QtWidgets.QCheckBox()
         self.zAxisCB = QtWidgets.QCheckBox()
         self.transformSLD = ktW.ktRangeSlider(textWidth=55)
@@ -123,18 +122,96 @@ class kt_randomizer(QtWidgets.QDialog):
             om.MGlobal.displayError("Please select any object.")
 
         # Print the dictionary to verify
-        print(self.objData)
+        #print(self.objData)
 
     
-    def generateNewResult(self):
-        print("TODO: Generate new result")
-        #Does it until there is no more touching
-        '''def randomizeAgain(touchingObjects):
-            mc.select(touchingObjects)
-            newRandomAction()
-            mc.select(selectedObjects)
+    def generateResult(self, value):
 
-        selectedObjects = mc.ls(selection=True)
+        def randomValues(range, xBool, yBool, zBool):
+            newValues = [0.0, 0.0, 0.0]
+
+            if xBool:
+                newValues[0] = random.uniform(range[0], range[1])
+            if yBool:
+                newValues[1] = random.uniform(range[0], range[1])
+            if zBool:
+                newValues[2] = random.uniform(range[0], range[1])
+
+            return newValues
+        """
+        - Get transformation
+        - Gather Checkboxes to see which axis to apply
+        - Get value of the slider
+        - Apply transformation
+        """
+        transform = self.optionsCMB.currentText()
+        boolValues = [self.xAxisCB.isChecked(), self.yAxisCB.isChecked(), self.zAxisCB.isChecked()]
+        minVal = self.transformSLD.getMinValue()
+        maxVal = float(value)
+
+        if self.objData:
+            selectedObjects = mc.ls(selection=True)
+            if selectedObjects:
+                for obj in selectedObjects:
+                    if obj in self.objData:
+                        initialPosition = self.objData[obj][transform]
+                        newPosition = randomValues([minVal, maxVal], *boolValues)
+                        resultingPosition = [initialPosition[0] + newPosition[0], 
+                                             initialPosition[1] + newPosition[1], 
+                                             initialPosition[2] + newPosition[2]]
+                        mc.xform(obj, **{transform: resultingPosition})
+                    else:
+                        om.MGlobal.displayWarning(f"The {obj} wasn't found in the selection. Skipping")
+
+    def generateNewResult(self):
+        self.generateResult(self.transformSLD.getValue())
+
+    def randomSelection(self, value):
+        originalSelection = list(self.objData.keys())
+        numSelect = int(float(value) * len(originalSelection))
+
+        # Randomly select a subset
+        selectedSubset = random.sample(originalSelection, numSelect)
+        
+        mc.select(selectedSubset)
+
+    
+    def retouchResult(self):
+         #Check if two objects Bounding Box intercept
+        def checkIntersectionBBox(mesh1, mesh2):
+
+            bbox1 = mc.exactWorldBoundingBox(mesh1)
+            bbox2 = mc.exactWorldBoundingBox(mesh2)
+
+            xmin1, ymin1, zmin1, xmax1, ymax1, zmax1 = bbox1
+            xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = bbox2
+            
+            # Check for intersection
+            if (xmin1 <= xmax2 and xmax1 >= xmin2 and
+                ymin1 <= ymax2 and ymax1 >= ymin2 and
+                zmin1 <= zmax2 and zmax1 >= zmin2):
+                return True
+            else:
+                return False
+
+        def checkTouchingObjList(selectedObjects):
+            touched = set()  # Keeps track of objects that have already been checked
+            finalObjects = []
+
+            for i in range(len(selectedObjects)):
+                obj1 = selectedObjects[i]
+                for j in range(i + 1, len(selectedObjects)):
+                    obj2 = selectedObjects[j]
+                    if obj2 in touched:
+                        break
+                    if checkIntersectionBBox(obj1, obj2):
+                        finalObjects.append((obj2))
+                        touched.add(obj2)
+                        break  # Move to the next object after finding a touching pair
+            return finalObjects
+        
+
+        selectedObjects = list(self.objData.keys())
         touchingObjects = []
         
         max_iterations = 100
@@ -142,18 +219,18 @@ class kt_randomizer(QtWidgets.QDialog):
 
         #Will break when all objects are in the same position
         while iteration_count < max_iterations:
-            touchingObjects = util.intersection.checkTouchingObjList(selectedObjects)
+            touchingObjects = checkTouchingObjList(selectedObjects)
             if touchingObjects:
-                randomizeAgain(touchingObjects)
+                mc.select(touchingObjects)
+                self.generateNewResult()
                 iteration_count += 1
             else:
                 break
 
         if iteration_count >= max_iterations:
-            mc.warning("Max iterations reached. Objects may still be touching.")'''
-
-    def retouchResult(self):
-        print("TODO: Retouch")
+            mc.warning("Max iterations reached. Objects may still be touching.")
+        
+        mc.select(selectedObjects)
     
     def clearSelection(self):
         print("TODO: Clear selection")
@@ -165,60 +242,4 @@ class kt_randomizer(QtWidgets.QDialog):
         - Clear checkboxes?
         """
 
-    def generateResult(self, value):
-        print(f"TODO: Generate result when slider changes {float(value)}")
-        """
-        - Get transformation
-        - Gather Checkboxes to see which axis use to apply
-        - Get value of the slider
-        - Apply transformation
-        """
-        transform = self.optionsCMB.currentText()
-        boolValues = [self.xAxisCB.isChecked(), self.yAxisCB.isChecked(), self.zAxisCB.isChecked()]
-        minVal = self.transformSLD.getMinValue()
-        print(minVal)
 
-
-        """
-        # GET VALUES
-        multiplyValue = mc.floatField(multiplyValueKey, q=True, v=True)
-        boolValues = [mc.checkBox(key, q=True, v=True) for key in boolKeys]
-        minVal = mc.floatField(minValKey, q=True, v=True)
-
-        if selObjRandom:
-            selectedObjects = mc.ls(selection=True)
-            selectedObjects = util.select.filterFlattenSelection(selectedObjects)
-            if selectedObjects:
-                for obj in selectedObjects:
-                    if obj in selObjRandom:
-                        initialPosition = selObjRandom[obj][transformationType]
-                        if initialPosition:
-                            if newValue != minVal:
-                                newPosition = util.random.getPosition(multiplyValue, [minVal, newValue], *boolValues)
-                                resultingPosition = [initialPosition[0] + newPosition[0], initialPosition[1] + newPosition[1], initialPosition[2] + newPosition[2]]
-                                mc.xform(obj, **{transformationType: resultingPosition})
-                            else:
-                                mc.xform(obj, **{transformationType: initialPosition})
-                    else:
-                        mc.confirmDialog(title='Error', message=obj + " can't be found in the selection. Please create a New Selection", button=['OK'], defaultButton='OK')
-                        break
-        else:
-            mc.confirmDialog(title='Error', message='Please create a New Selection', button=['OK'], defaultButton='OK')
-        """
-
-    def randomSelection(self, value):
-        print(f"TODO: Randomize  selection {float(value)}")
-        """
-        newValue = mc.floatSliderGrp('selSlider', query=True, value=True)
-        originalSelection = list(selObjRandom.keys())
-
-        mc.select(originalSelection)
-        currentSelection = mc.ls(selection=True)
-        currentSelection = util.select.filterFlattenSelection(currentSelection)
-
-        numSelect = int(newValue * len(originalSelection))
-        # Randomly select a subset
-        selectedSubset = util.random.getSample(originalSelection, numSelect)
-        
-        mc.select(selectedSubset)
-        """
