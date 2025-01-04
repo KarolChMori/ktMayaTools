@@ -5,7 +5,7 @@ class ktRangeSlider(QtWidgets.QWidget):
     # Define a custom signal to notify when the value changes
     valueChangedEvent = QtCore.Signal(float)
 
-    def __init__(self, textWidth=60, sliderWidth=150, devValue=0, minValue=0, maxValue=10, showValueField=True, showMinMaxField=True, stepSize=1):
+    def __init__(self, textWidth=60, sliderWidth=150, devValue=0, minValue=0, maxValue=10, showValueField=True, showMinMaxField=True, stepSize=1, enabled=True):
         super().__init__()
 
         """
@@ -19,6 +19,7 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.showValueField = showValueField
         self.showMinMaxField = showMinMaxField
         self.stepSize = stepSize
+        self.enabled = enabled
         
         """
         UI Creation
@@ -63,6 +64,7 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.valueField.setSingleStep(self.stepSize)
         self.valueField.setValue(self.slider.value() / self.scaleFactor)
         
+        self.setEnabled(self.enabled)
 
     def createLayouts(self):
         mainLayout = QtWidgets.QHBoxLayout(self)
@@ -84,6 +86,13 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.maxField.valueChanged.connect(self.setMaxSlider)
         self.valueField.valueChanged.connect(self.setSliderValue)
     
+    def setEnabled(self, enabled):
+
+        self.slider.setEnabled(enabled)
+        self.minField.setEnabled(enabled)
+        self.maxField.setEnabled(enabled)
+        self.valueField.setEnabled(enabled)
+
     def onSliderValueChanged(self):
         """This function will be called whenever the slider value changes, and will 
             emit a custom signal when the slider value changes"""
@@ -133,3 +142,14 @@ class ktRangeSlider(QtWidgets.QWidget):
     
     def getMaxValue(self):
         return self.maxField.value()
+    
+    def setMinValue(self, value):
+        self.minField.setValue(value)
+        self.setMinSlider()
+    
+    def setMaxValue(self, value):
+        self.maxField.setValue(value)
+        self.setMaxSlider()
+    
+    def setValueField(self, value):
+        self.valueField.setValue(value)

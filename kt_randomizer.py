@@ -23,7 +23,7 @@ class kt_randomizer(QtWidgets.QDialog):
         super(kt_randomizer, self).__init__(parent)
 
         self.setWindowTitle("Randomizer")
-        self.setFixedSize(510, 100)
+        self.setFixedSize(520, 100)
 
         self.setWindowFlags(self.windowFlags() ^ QtCore.Qt.WindowContextHelpButtonHint) #Remove the ? button
 
@@ -39,12 +39,11 @@ class kt_randomizer(QtWidgets.QDialog):
     def createWidgets(self):
         self.selBTN = QtWidgets.QPushButton("New Sel")
         self.selBTN.setFixedWidth(70)
-        self.selSLD = ktW.ktRangeSlider(devValue=1, minValue=0, maxValue=1, showMinMaxField=False, 
-                                        stepSize=0.1, sliderWidth=100)
+        self.selSLD = ktW.ktRangeSlider(devValue=1, minValue=0, maxValue=1, showMinMaxField=False, stepSize=0.1, sliderWidth=100, enabled=False)
         self.resultBTN = QtWidgets.QPushButton("New Result")
         self.retouchBTN = QtWidgets.QPushButton("Retouch")
-        self.clearBTN = QtWidgets.QPushButton("Clear")
-        self.clearBTN.setFixedWidth(50)
+        self.resetBTN = QtWidgets.QPushButton("Reset")
+        self.resetBTN.setFixedWidth(50)
 
         # --------------------------------------------
         self.optionsCMB = QtWidgets.QComboBox()
@@ -55,8 +54,9 @@ class kt_randomizer(QtWidgets.QDialog):
         self.xAxisCB.setChecked(True)
         self.yAxisCB = QtWidgets.QCheckBox()
         self.zAxisCB = QtWidgets.QCheckBox()
-        self.transformSLD = ktW.ktRangeSlider(textWidth=55)
+        self.transformSLD = ktW.ktRangeSlider(textWidth=55, enabled=False)
 
+        self.setWidgetsEnabled(False)
 
     def createLayouts(self):
         
@@ -68,7 +68,7 @@ class kt_randomizer(QtWidgets.QDialog):
         mainGridLYT.addWidget(self.selSLD, 0,1)
         mainGridLYT.addWidget(self.resultBTN, 0,2)
         mainGridLYT.addWidget(self.retouchBTN, 0,3)
-        mainGridLYT.addWidget(self.clearBTN, 0,4)
+        mainGridLYT.addWidget(self.resetBTN, 0,4)
 
         """ Transformation Grid """
         coordGridLYT = QtWidgets.QGridLayout(self)
@@ -86,7 +86,6 @@ class kt_randomizer(QtWidgets.QDialog):
         coordGridLYT.addWidget(self.zAxisCB, 1,3)
         coordGridLYT.addWidget(self.transformSLD, 1,4,1,6)
 
-
         mainLayout.addLayout(mainGridLYT)
         mainLayout.addLayout(coordGridLYT)
 
@@ -96,7 +95,7 @@ class kt_randomizer(QtWidgets.QDialog):
         self.selBTN.clicked.connect(self.createSelection)
         self.resultBTN.clicked.connect(self.generateNewResult)
         self.retouchBTN.clicked.connect(self.retouchResult)
-        self.clearBTN.clicked.connect(self.clearSelection)
+        self.resetBTN.clicked.connect(self.resetValues)
         self.selSLD.valueChangedEvent.connect(self.randomSelection)
         self.transformSLD.valueChangedEvent.connect(self.generateResult)
 
@@ -108,6 +107,8 @@ class kt_randomizer(QtWidgets.QDialog):
         selectedObjects = mc.ls(selection=True)
 
         if selectedObjects:
+            self.setWidgetsEnabled(True)
+
             for obj in selectedObjects:
                 translate = mc.xform(obj, query=True, worldSpace=True, translation=True)
                 rotate = mc.xform(obj, query=True, worldSpace=True, rotation=True)
@@ -162,6 +163,8 @@ class kt_randomizer(QtWidgets.QDialog):
                         mc.xform(obj, **{transform: resultingPosition})
                     else:
                         om.MGlobal.displayWarning(f"The {obj} wasn't found in the selection. Skipping")
+        else:
+            om.MGlobal.displayError(f"No selection was made. Please create a selection.")
 
     def generateNewResult(self):
         self.generateResult(self.transformSLD.getValue())
@@ -172,14 +175,11 @@ class kt_randomizer(QtWidgets.QDialog):
 
         # Randomly select a subset
         selectedSubset = random.sample(originalSelection, numSelect)
-        
         mc.select(selectedSubset)
 
-    
     def retouchResult(self):
-         #Check if two objects Bounding Box intercept
+        #Check if two objects Bounding Box intercept
         def checkIntersectionBBox(mesh1, mesh2):
-
             bbox1 = mc.exactWorldBoundingBox(mesh1)
             bbox2 = mc.exactWorldBoundingBox(mesh2)
 
@@ -194,6 +194,7 @@ class kt_randomizer(QtWidgets.QDialog):
             else:
                 return False
 
+        #Get the list of the objects that are touching
         def checkTouchingObjList(selectedObjects):
             touched = set()  # Keeps track of objects that have already been checked
             finalObjects = []
@@ -210,36 +211,54 @@ class kt_randomizer(QtWidgets.QDialog):
                         break  # Move to the next object after finding a touching pair
             return finalObjects
         
+        # --------------------------------------------------------------------------
+        if self.objData:
+            selectedObjects = list(self.objData.keys())
+            touchingObjects = []
+            
+            max_iterations = 100
+            iteration_count = 0
 
-        selectedObjects = list(self.objData.keys())
-        touchingObjects = []
-        
-        max_iterations = 100
-        iteration_count = 0
+            #Will break when all objects are in the same position
+            while iteration_count < max_iterations:
+                touchingObjects = checkTouchingObjList(selectedObjects)
+                if touchingObjects:
+                    mc.select(touchingObjects)
+                    self.generateNewResult()
+                    iteration_count += 1
+                else:
+                    break
 
-        #Will break when all objects are in the same position
-        while iteration_count < max_iterations:
-            touchingObjects = checkTouchingObjList(selectedObjects)
-            if touchingObjects:
-                mc.select(touchingObjects)
-                self.generateNewResult()
-                iteration_count += 1
-            else:
-                break
-
-        if iteration_count >= max_iterations:
-            mc.warning("Max iterations reached. Objects may still be touching.")
-        
-        mc.select(selectedObjects)
+            if iteration_count >= max_iterations:
+                om.MGlobal.displayWarning("Max iterations reached. Objects may still be touching. Try again")
+            
+            mc.select(selectedObjects)
+        else:
+            om.MGlobal.displayError(f"No selection was made. Please create a selection.")
     
-    def clearSelection(self):
-        print("TODO: Clear selection")
+    def resetValues(self):
+        self.setWidgetsEnabled(False)
+        
+        self.selSLD.setValueField(1)
+        self.transformSLD.setMinValue(0)
+        self.transformSLD.setMaxValue(10)
+        self.transformSLD.setValueField(0)
+        self.optionsCMB.setCurrentIndex(0)
+        self.xAxisCB.setChecked(True)
+        self.yAxisCB.setChecked(False)
+        self.zAxisCB.setChecked(False)
+        self.objData.clear()
 
-        """
-        - Clear selection
-        - Reset selection Slider
-        - Reset transform range
-        - Clear checkboxes?
-        """
+    def setWidgetsEnabled(self, value):
+        self.selSLD.setEnabled(value)
+        self.optionsCMB.setEnabled(value)
+        self.xAxisCB.setEnabled(value)
+        self.yAxisCB.setEnabled(value)
+        self.zAxisCB.setEnabled(value)
+        self.transformSLD.setEnabled(value)
+        self.resetBTN.setEnabled(value)
+        self.resultBTN.setEnabled(value)
+        self.retouchBTN.setEnabled(value)
+        
 
 
