@@ -237,6 +237,7 @@ class kt_randomizer(QtWidgets.QDialog):
             om.MGlobal.displayError(f"No selection was made. Please create a selection.")
     
     def resetValues(self):
+        mc.select(cl=True)
         self.setWidgetsEnabled(False)
         
         self.selSLD.setValueField(1)

@@ -29,7 +29,7 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.createConnections()
 
     def createWidgets(self):
-        # Scaling factor to allow fractional precision (unmodified pre=2)
+        # Scaling factor to allow fractional precision (not modifiable pre=2)
         self.scaleFactor = 100 
         
         # Scale values to integers
@@ -81,11 +81,12 @@ class ktRangeSlider(QtWidgets.QWidget):
 
     def createConnections(self):
         """When values change update the widgets with the functions innit"""
-        self.slider.valueChanged.connect(self.onSliderValueChanged)
-        self.minField.valueChanged.connect(self.setMinSlider)
-        self.maxField.valueChanged.connect(self.setMaxSlider)
-        self.valueField.valueChanged.connect(self.setSliderValue)
+        self.slider.valueChanged.connect(self.__onSliderValueChanged)
+        self.minField.valueChanged.connect(self.__setMinSlider)
+        self.maxField.valueChanged.connect(self.__setMaxSlider)
+        self.valueField.valueChanged.connect(self.__setSliderValue)
     
+
     def setEnabled(self, enabled):
 
         self.slider.setEnabled(enabled)
@@ -93,14 +94,25 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.maxField.setEnabled(enabled)
         self.valueField.setEnabled(enabled)
 
-    def onSliderValueChanged(self):
+    def setMinValue(self, value):
+        self.minField.setValue(value)
+        self.setMinSlider()
+    
+    def setMaxValue(self, value):
+        self.maxField.setValue(value)
+        self.setMaxSlider()
+    
+    def setValueField(self, value):
+        self.valueField.setValue(value)
+
+    def __onSliderValueChanged(self):
         """This function will be called whenever the slider value changes, and will 
             emit a custom signal when the slider value changes"""
         self.valueField.setValue(self.slider.value() / self.scaleFactor)
         self.valueChangedEvent.emit(self.valueField.value())
         #print(f"Slider value changed: {value}")
 
-    def setMinSlider(self):
+    def __setMinSlider(self):
         """Update the slider's minimum value based on the input."""
         self.minValueScaled = int(self.minField.value() * self.scaleFactor)
 
@@ -115,7 +127,7 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.slider.update()
         self.slider.repaint()
 
-    def setMaxSlider(self):
+    def __setMaxSlider(self):
         """Update the slider's maximum value based on the input."""
         self.maxValueScaled = int(self.maxField.value() * self.scaleFactor)
 
@@ -130,7 +142,7 @@ class ktRangeSlider(QtWidgets.QWidget):
         self.slider.update()
         self.slider.repaint()
 
-    def setSliderValue(self):
+    def __setSliderValue(self):
         """Update the slider's value when the spinbox value changes."""
         self.slider.setValue(int(self.valueField.value() * self.scaleFactor))
     
@@ -143,13 +155,3 @@ class ktRangeSlider(QtWidgets.QWidget):
     def getMaxValue(self):
         return self.maxField.value()
     
-    def setMinValue(self, value):
-        self.minField.setValue(value)
-        self.setMinSlider()
-    
-    def setMaxValue(self, value):
-        self.maxField.setValue(value)
-        self.setMaxSlider()
-    
-    def setValueField(self, value):
-        self.valueField.setValue(value)

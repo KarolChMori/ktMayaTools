@@ -5,8 +5,8 @@ import math
 import maya.mel as mel
 import maya.OpenMaya as om
 
-mainWidth = 450
 mainHeight = 400
+mainWidth = 450
 
 global vertexData
 global geoData
@@ -382,12 +382,12 @@ def onUpdate_secgeoTB(row, column, value):
     #Returns:
         None
 """
-def createUI(height, width):
+def createUI(height = 400, width = 450):
     #Verify if the window exists, if exists delete it
-    if mc.window('mainWindow', exists= True):
-        mc.deleteUI('mainWindow')
+    if mc.window('popConstraintWND', exists= True):
+        mc.deleteUI('popConstraintWND')
 
-    mainWindow = mc.window('mainWindow', t='PointOnPoly Tool', h=height, w=width, s=False)
+    mainWindow = mc.window('popConstraintWND', t='PointOnPoly Tool', h=height, w=width, s=False)
 
     tableColumnW = (width-20)/3
 
